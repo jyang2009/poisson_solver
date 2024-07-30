@@ -1,0 +1,6 @@
+number_of_regions   4
+length_in_nm  num_of_mesh
+     5000        5000
+     0.5           10
+     0.2           10
+     3000        3000

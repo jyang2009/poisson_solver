@@ -1,2 +1,25 @@
-# poisson_solver
-solving Poisson's equation to get space charge layer profile
+This code solves the Poisson's equation to get space charge layer profile
+
+# Installation
+The [eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) C++ library is needed for compilation. After downloading the library, one should change the path to the eigen library in Makefile. Then compile the code with `make` to get the executable file. 
+
+# Input files
+## region_list
+The `region_list` file specifies the length of the simulation cell and the number of mesh in each region. Currently this code only supports having four regions (bulk region of material 1, interface region of material 1, bulk region of material 2, interface regions of material 2).   
+## element_list
+The `element_list` file species how many elements there are in the system. The first element should always be oxygen. The order of the elements corresponds to the `mu0`, `mu1`, `mu2`... files, i.e. `mu0` will define the chemical potential of oxygen.
+## mu
+The `mu` files contain the energies of the relevant reference phases for each element. The first line gives the total number of phases. For example, for oxygen, we consider only the oxygen gas phase, so the first line has the number 1. In the list, the first column n is a index (0, 1, 2). The second column is the name of the phase. Then the number of atoms of each element in this phase should be given in the order as in `element_list`. For example, for O2, num_O = 2, and the other numbers are 0. Then comes the energy of the phase. Here this number should be given for each region (so total of 4 numbers are given). In a normal simulation the four energy numbers should be the same. The last column is the pressure dependence, i.e. if the chemical potential has a k_bTlog(P_O2) dependence. For oxygen gas this number is 1 and for all other phases 0.
+## band and DOSCAR
+The band and DOSCAR files correspond to the four regions. DOSCAR contains the electronic density of states. ENCUT is the total number of mesh in DOSCAR. E_VBM and E_CBM the position of conduction and valence band. n_defect is the number of ionic defect type in the given region (this determines how many lines from the `defect` file will be read). E_MP is the Makov-Payne correction given in the order of number of charge (correction for defect with charge 0, 1, 2, 3, 4 ...). If corrections are already considered in the energies in `defect`, one can put the E_MP here as all 0. DOS_deno is the number of unit formula corresponding to the DOSCAR calculation (a normalization factor). 
+## defect
+The defect files also correspond to the four regions. First colunm is the index number. The second column is the charge of the defect. Then the next columns give the number of atoms as compared to perfect cell. For example, num_O = -1 for oxygen vacancy. Here the order of the elements should also follow `element_list`. The number of elements is flexible. The next two columns give the energy of the defective cell and perfect cell. The difference of the two columns are used as the formation energy of the defect. (If one pre-calculate the difference, it is OK to put the formation energy in the E_DFT column and put 0 in the E_perfect column.) The next column is the number of site, this is the pre-factor when calculating the defect concentration. The last colunm `group_number` determines which defects can occupy the same site. The defects with the same group number will enter the summation in the Fermi-Dirac formula. 
+
+# Output
+When running the code, `iter_result.txt` contains the most important information on the iteration progress. Here we are performing a binary search for the space charge potential and `E_l` and `E_r` are the lower and upper limit of the search. During the iteration, these two numbers should be closer and closer to each other until convergence is reached. The `rho` value is the sum of charge. This value should become smaller and smaller (meaning that the global charge neutrality is reached).
+
+After running the code, the electrostatic potential is stored in `x0_output`. This has the same length as the mesh size in `region_list`. The local charge density is stored in `rho_output`. The local defect concentrations are stored in `concentration_output`. The format of this file is slightly complicated. It first gives all the defect concentrations in region0 (electron, hole, and all defect in defect0). Here region0 has 5000 meshes. So the first 5000 lines in `concentration_output` corresponds to the concentration of electron in region0, the next 5000 lines corresponds to hole, and the next the first defect in `defect0` (neutral oxygen vacancy). After writing all defect concentrations in region0, it writes for region1, region2, region3. 
+
+# Other tunable parameters
+There are some parameters in the code (`poisson.cpp`) that one can change. `temp` gives the temperature of the simulation. `delta_Ev` is the offset in valence band of the two materials. `pressure` is the oxygen partial pressure. `max_step` is the maximum number of iterations. `c_dopant1` and `c_dopant2` are the dopant concentration on each side. If they are given a non-zero number, the code will ignore the defination of mu of the dopant species in the input file, but instead iterate over the chemical potential and find the value at which the `c_dopant` is reached. For an undoped calculation, both should be put to zero. 
+        
