@@ -1,0 +1,8 @@
+ENCUT 10000
+E_CBM  6.058
+E_VBM  2.571
+n_defect 16 
+dielectric_constant  20
+E_MP 0  1.938616   7.754462  17.447541  31.017850
+DOS_deno 32
+Volume_per_unit_formula  35.6412e-30  
